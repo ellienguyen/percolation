@@ -4,12 +4,14 @@
 
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.StdStats;
-import edu.princeton.cs.algs4.SymbolDigraph;
 
 public class PercolationStats {
     private double[] result;
     private int trials;
     public PercolationStats(int n, int trials) {
+        if (n <= 0 || trials <= 0) {
+            throw new java.lang.IllegalArgumentException("Invalid input");
+        }
         this.trials = trials;
         this.result = new double[trials];
         for (int i = 0; i < trials; i++) {

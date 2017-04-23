@@ -8,28 +8,35 @@
  *
  ******************************************************************************/
 
-
-import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
-    private int[][] data;
+    private static final int VIRTUAL_TOP;
+    private static final int VIRTUAL_BOTTOM;
+    private boolean[] data;
     private int width;
-    private WeightedQuickUnionUF quickUnion;
+    private WeightedQuickUnionUF grid;    // grid data, WeightedQuickUnionUF object
+    private WeightedQuickUnionUF auxGrid;
     public Percolation(int n) {
         if (n < 1) {
             throw new java.lang.IllegalArgumentException("Invalid input");
         }
         this.width = n;
-        this.data = new int[n][n];
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                this.data[i][j] = 0;
-            }
+        this.data = new boolean[n * n];
+        for (int i = 0; i < n * n; i++) {
+            this.data[i] = false;
         }
-        this.quickUnion = new WeightedQuickUnionUF(n * n + 2);
+        grid = new WeightedQuickUnionUF(n * n + 2);
+        auxGrid = new WeightedQuickUnionUF(n * n + 2);
     }           // create n-by-n grid, with all sites blocked
 
+    private int getIndexArray(int row, int col) {
+        return row * this.width + col;
+    }
+
+    private int getIndex() {
+        return row * this.width + col + 1;
+    }
     public void open(int row, int col) {
         if (row < 1 || col < 1 || row > this.width || col > this.width) {
             throw new java.lang.IndexOutOfBoundsException("Invalid input");
@@ -37,23 +44,12 @@ public class Percolation {
         this.unionAround(row, col);
         this.data[row - 1][col - 1] = 1;
         this.topVirtual();
-        for (int i = 0; i < this.width; i++) {
-            for (int j = 0; j < this.width; j++) {
-                if (this.data[i][j] == 1) {
-                    int des = i * this.width + j;
-                    if (this.quickUnion.connected(this.width * this.width + 1, des)) {
-                        this.data[i][j] = 2;
-                    }
-                }
-            }
-        }
     }
 
-    public void topVirtual() {
+    private void topVirtual() {
         for (int i = 1; i < this.width; i++) {
             if (this.isOpen(1, i)) {
                 this.quickUnion.union(this.width * this.width + 1, i - 1);
-                this.data[0][i - 1] = 2;
             }
         }
     }
@@ -68,7 +64,8 @@ public class Percolation {
         if (row < 1 || col < 1 || row > this.width || col > this.width) {
             throw new java.lang.IndexOutOfBoundsException("Invalid input");
         }
-        return this.data[row - 1][col - 1] == 2;
+        return this.quickUnion.connected((row - 1) * this.width + col - 1, (this.width * this
+                .width ));
     }
 
     public int numberOfOpenSites()  {
