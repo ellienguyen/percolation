@@ -38,7 +38,7 @@ public class PercolationStats {
     }              // high endpoint of 95% confidence interval
 
     public static void main(String[] args)   {
-        PercolationStats test = new PercolationStats(100, 20);
+        PercolationStats test = new PercolationStats(100, 50);
         System.out.println(test.mean());
         System.out.println(test.stddev());
         System.out.println(test.confidenceLo());

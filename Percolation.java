@@ -35,22 +35,29 @@ public class Percolation {
             throw new java.lang.IndexOutOfBoundsException("Invalid input");
         }
         this.unionAround(row, col);
-
-        if (row == 1) {
-            this.data[row - 1][col - 1] = 2;
-        }
+        this.data[row - 1][col - 1] = 1;
+        this.topVirtual();
         for (int i = 0; i < this.width; i++) {
             for (int j = 0; j < this.width; j++) {
                 if (this.data[i][j] == 1) {
-                    int origin ;
                     int des = i * this.width + j;
-                    if (this.quickUnion.connected(origin, des)) {
+                    if (this.quickUnion.connected(this.width * this.width + 1, des)) {
                         this.data[i][j] = 2;
                     }
                 }
             }
         }
     }
+
+    public void topVirtual() {
+        for (int i = 1; i < this.width; i++) {
+            if (this.isOpen(1, i)) {
+                this.quickUnion.union(this.width * this.width + 1, i - 1);
+                this.data[0][i - 1] = 2;
+            }
+        }
+    }
+
     public boolean isOpen(int row, int col) {
         if (row < 1 || col < 1 || row > this.width || col > this.width) {
             throw new java.lang.IndexOutOfBoundsException("Invalid input");
