@@ -11,8 +11,8 @@
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 public class Percolation {
-    private static final int VIRTUAL_TOP;
-    private static final int VIRTUAL_BOTTOM;
+    private int VIRTUAL_TOP;
+    private int VIRTUAL_BOTTOM;
     private boolean[] data;
     private int width;
     private WeightedQuickUnionUF grid;    // grid data, WeightedQuickUnionUF object
@@ -26,46 +26,45 @@ public class Percolation {
         for (int i = 0; i < n * n; i++) {
             this.data[i] = false;
         }
+        VIRTUAL_TOP = n * n;
+        VIRTUAL_BOTTOM = n * n + 1;
         grid = new WeightedQuickUnionUF(n * n + 2);
         auxGrid = new WeightedQuickUnionUF(n * n + 2);
-    }           // create n-by-n grid, with all sites blocked
-
-    private int getIndexArray(int row, int col) {
-        return row * this.width + col;
     }
 
-    private int getIndex() {
-        return row * this.width + col + 1;
-    }
-    public void open(int row, int col) {
+    private int getIndex(int row, int col) {
         if (row < 1 || col < 1 || row > this.width || col > this.width) {
+            return -1;
+        }
+        return (row - 1) * this.width + col - 1;
+    }
+
+    public void open(int row, int col) {
+        if (getIndex(row, col) == -1) {
             throw new java.lang.IndexOutOfBoundsException("Invalid input");
         }
         this.unionAround(row, col);
-        this.data[row - 1][col - 1] = 1;
-        this.topVirtual();
-    }
-
-    private void topVirtual() {
-        for (int i = 1; i < this.width; i++) {
-            if (this.isOpen(1, i)) {
-                this.quickUnion.union(this.width * this.width + 1, i - 1);
-            }
+        this.data[getIndex(row, col)] = true;
+        if (row == 1) {
+            this.grid.union(getIndex(row, col), VIRTUAL_TOP);
+            this.auxGrid.union(getIndex(row, col), VIRTUAL_TOP);
+        }
+        if (row == width) {
+            this.auxGrid.union(getIndex(row, col), VIRTUAL_BOTTOM);
         }
     }
 
     public boolean isOpen(int row, int col) {
-        if (row < 1 || col < 1 || row > this.width || col > this.width) {
+        if (getIndex(row, col) == -1) {
             throw new java.lang.IndexOutOfBoundsException("Invalid input");
         }
-        return this.data[row - 1][col - 1] != 0;
+        return this.data[getIndex(row, col)];
     }
     public boolean isFull(int row, int col) {
-        if (row < 1 || col < 1 || row > this.width || col > this.width) {
+        if (getIndex(row, col) == -1) {
             throw new java.lang.IndexOutOfBoundsException("Invalid input");
         }
-        return this.quickUnion.connected((row - 1) * this.width + col - 1, (this.width * this
-                .width ));
+        return this.grid.connected(VIRTUAL_TOP, getIndex(row, col));
     }
 
     public int numberOfOpenSites()  {
@@ -89,48 +88,34 @@ public class Percolation {
 
 
     private void unionNorth(int row, int col) {
-        if (row - 1 >= 1 && this.isOpen(row - 1, col)) {
-            this.quickUnion.union((row - 1) * this.width + col - 1, (row - 2) * this.width + col -
-                    1);
-            if (this.isFull(row - 1, col)) {
-                this.data[row - 1][col - 1] = 2;
-            }
+        if (getIndex(row - 1,  col) != -1 && this.isOpen(row - 1, col)) {
+            this.grid.union(getIndex(row, col), getIndex(row - 1, col));
+            this.auxGrid.union(getIndex(row, col), getIndex(row - 1, col));
         }
     }
 
     private void unionSouth(int row, int col) {
-        if (row + 1 <= this.width && this.isOpen(row + 1, col)) {
-            this.quickUnion.union((row - 1) * this.width + col - 1, row * this.width + col - 1);
-            if (this.isFull(row + 1, col)) {
-                this.data[row - 1][col - 1] = 2;
-            }
+        if (getIndex(row + 1,  col) != -1 && this.isOpen(row + 1, col)) {
+            this.grid.union(getIndex(row, col), getIndex(row + 1, col));
+            this.auxGrid.union(getIndex(row, col), getIndex(row + 1, col));
         }
     }
 
     private void unionEast(int row, int col) {
-        if (col + 1 <= this.width && this.isOpen(row, col + 1)) {
-            this.quickUnion.union((row - 1) * this.width + col - 1, (row - 1) * this.width + col);
-            if (this.isFull(row, col + 1)) {
-                this.data[row - 1][col - 1] = 2;
-            }
+        if (getIndex(row,  col - 1) != -1 && this.isOpen(row, col - 1)) {
+            this.grid.union(getIndex(row, col), getIndex(row, col - 1));
+            this.auxGrid.union(getIndex(row, col), getIndex(row, col - 1));
         }
     }
     private void unionWest(int row, int col) {
-        if (col - 1 >= 1 && this.isOpen(row, col - 1)) {
-            this.quickUnion.union((row - 1) * this.width + col - 2,
-                    (row -1) * this.width + col - 1);
-            if (this.isFull(row, col - 1)) {
-                this.data[row - 1][col - 1] = 2;
-            }
+        if (getIndex(row,  col + 1) != -1 && this.isOpen(row, col + 1)) {
+            this.grid.union(getIndex(row, col), getIndex(row, col + 1));
+            this.auxGrid.union(getIndex(row, col), getIndex(row, col + 1));
         }
     }
+
     public boolean percolates()   {
-        for (int i = 0; i < this.width; i++) {
-            if (this.data[this.width - 1][i] == 2) {
-                return true;
-            }
-        }
-        return false;
+        return this.auxGrid.connected(VIRTUAL_TOP, VIRTUAL_BOTTOM);
     }           // does the system percolate?
 
     public static void main(String[] args) {
